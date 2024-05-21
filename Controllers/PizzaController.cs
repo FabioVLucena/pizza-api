@@ -16,9 +16,9 @@ public class PizzaController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<Pizza>> GetAll()
+    public IEnumerable<Pizza> GetAll()
     {
-        return Ok(_service.GetAll());
+        return _service.GetAll();
     }
 
     [HttpGet("{id}")]
