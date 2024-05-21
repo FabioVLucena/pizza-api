@@ -1,47 +1,63 @@
+using ContosoPizza.Data;
 using ContosoPizza.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ContosoPizza.Services;
 
-public static class PizzaService
+public class PizzaService
 {
-    static int nextId = 3;
+    private readonly PizzaContext _context;
 
-    static List<Pizza> Pizzas { get; }
-
-    static PizzaService()
+    public PizzaService(PizzaContext context)
     {
-        Pizzas =
-        [
-            new Pizza { Id = 1, Name = "Classic Italian", IsGlutenFree = false },
-            new Pizza { Id = 2, Name = "Veggie", IsGlutenFree = true }
-        ];
+        _context = context;
     }
 
-    public static List<Pizza> GetAll() => Pizzas;
-
-    public static Pizza? Get(int id) => Pizzas.FirstOrDefault(p => p.Id == id);
-
-    public static Pizza Add(Pizza pizza)
+    public IEnumerable<Pizza> GetAll()
     {
-        pizza.Id = nextId++;
-        Pizzas.Add(pizza);
+        return _context.Pizzas
+        .AsNoTracking()
+        .ToList();
+    }
+
+    public Pizza? GetById(int id)
+    {
+        return _context.Pizzas
+        .AsNoTracking()
+        .SingleOrDefault(p => p.Id == id);
+    }
+
+    public Pizza Create(Pizza pizza)
+    {
+        _context.Pizzas.Add(pizza);
+        _context.SaveChanges();
+
         return pizza;
     }
 
-    public static void Update(Pizza pizza)
+    public void Update(Pizza pizza)
     {
-        int index = Pizzas.FindIndex(p => p.Id == pizza.Id);
-        if (index == -1)
-            return;
+        var pizzaToUpdate = _context.Pizzas.Find(pizza.Id);
 
-        Pizzas[index] = pizza;
+        if (pizzaToUpdate is null)
+        {
+            throw new InvalidOperationException("Pizza does not exist");
+        }
+
+        pizzaToUpdate.Name = pizza.Name;
+        pizzaToUpdate.IsGlutenFree = pizza.IsGlutenFree;
+
+        _context.SaveChanges();
     }   
 
-    public static void Delete(int id) {
-        var pizza = Get(id);
-        if (pizza is null)
-            return;
+    public void DeleteById(int id)
+    {
+        var pizzaToDelete = _context.Pizzas.Find(id);
 
-        Pizzas.Remove(pizza);
+        if (pizzaToDelete is not null)
+        {
+            _context.Pizzas.Remove(pizzaToDelete);
+            _context.SaveChanges();
+        }
     }
 }
