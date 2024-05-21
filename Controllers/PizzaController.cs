@@ -8,21 +8,24 @@ namespace ContosoPizza.Controllers;
 [Route("[controller]")]
 public class PizzaController : ControllerBase
 {
+    private readonly PizzaService _service;
 
-    public PizzaController()
+    public PizzaController(PizzaService service)
     {
-
+        _service = service;
     }
 
     [HttpGet]
-    public ActionResult<List<Pizza>> GetAll() => PizzaService.GetAll();
+    public ActionResult<IEnumerable<Pizza>> GetAll()
+    {
+        return Ok(_service.GetAll());
+    }
 
     [HttpGet("{id}")]
     public ActionResult<Pizza> Get(int id)
     {
-        var pizza = PizzaService.GetById(id);
-
-        if (pizza == null)
+        var pizza = _service.GetById(id);
+        if (pizza is null)
             return NotFound();
 
         return pizza;
@@ -31,8 +34,8 @@ public class PizzaController : ControllerBase
     [HttpPost]
     public IActionResult Create(Pizza pizza)
     {
-        PizzaService.Add(pizza);
-        return CreatedAtAction(nameof(Get), new { id = pizza.Id }, pizza);
+        Pizza newPizza = _service.Create(pizza);
+        return CreatedAtAction(nameof(Get), new { id = newPizza.Id }, newPizza);
     }
 
     [HttpPut("{id}")]
@@ -41,11 +44,12 @@ public class PizzaController : ControllerBase
         if (id != pizza.Id)
             return BadRequest();
 
-        var existingPizza = PizzaService.GetById(id);
+        var existingPizza = _service.GetById(id);
+        
         if (existingPizza is null)
             return NotFound();
 
-        PizzaService.Update(pizza);
+        _service.Update(pizza);
 
         return NoContent();
     }
@@ -53,11 +57,11 @@ public class PizzaController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
-        var pizza = PizzaService.GetById(id);
+        var pizza = _service.GetById(id);
         if (pizza is null)
             return NotFound();
 
-        PizzaService.Delete(id);
+        _service.DeleteById(id);
 
         return NoContent();
     }
